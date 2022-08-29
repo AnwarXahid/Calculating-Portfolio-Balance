@@ -10,6 +10,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "csv-parse": "^5.3.0",
+    "dataframe-js": "^1.4.4",
     "yargs": "^17.5.1"
   }
 }
