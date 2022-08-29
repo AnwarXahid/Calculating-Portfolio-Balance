@@ -1,0 +1,12 @@
+{
+  "name": "calculate_portfolio_balance",
+  "version": "1.0.0",
+  "description": "Calculating Portfolio Balance from given CSV file data",
+  "main": "portfolio-balance.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
