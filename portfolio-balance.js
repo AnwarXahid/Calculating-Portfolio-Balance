@@ -13,6 +13,7 @@ let transHistCol;
 const transHistCol_TOKEN = 'token';
 const transHistCol_TRANSACTION_TYPE = 'transaction_type';
 const transHistCol_AMOUNT = 'amount';
+const transHistCol_TIMESTAMP = 'timestamp';
 
 
 // Configuring Command Line Input
@@ -22,7 +23,7 @@ const options = yargs
     .argv;
 
 
-// Method to get the latest portfolio balance for a given token input
+// Method to get the latest portfolio value for a given token input
 const getLatestPortfolioForParticularToken = (df, token) => {
     let balance = 0;
     df.filter(row => row.get(transHistCol_TOKEN) === token)
@@ -33,8 +34,33 @@ const getLatestPortfolioForParticularToken = (df, token) => {
                 balance - row.get(transHistCol_AMOUNT);
         });
 
-    console.log("Latest Portfolio for " + token + " is : " + balance);
+    console.log("Latest Portfolio Value for " + token + " is : " + balance);
 }
+
+
+
+// Method to get the portfolio value for a given date : format (yyyy-mm-dd)
+const getPortfolioValueForParticularDate = (df, date) => {
+    let balance = 0;
+    let initialEpochAtGMT = new Date(date + 'T00:00:00.000+00:00').getTime() / 1000;
+    let finalEpochAtGMT = initialEpochAtGMT + 86400000;
+
+    function predicateTheTimestamp(timestamp) {
+        let intTimestamp = parseInt(timestamp);
+        return intTimestamp > initialEpochAtGMT && intTimestamp < finalEpochAtGMT;
+    }
+
+    df.filter(row => predicateTheTimestamp(row.get(transHistCol_TIMESTAMP)))
+        .cast(transHistCol_AMOUNT, Number)
+        .map(row => {
+            balance = row.get(transHistCol_TRANSACTION_TYPE) === "DEPOSIT" ?
+                balance + row.get(transHistCol_AMOUNT) :
+                balance - row.get(transHistCol_AMOUNT);
+        });
+
+    console.log("Portfolio Value for the date " + date + " is : " + balance);
+}
+
 
 
 // Read csv file and process data using data frame
@@ -46,7 +72,7 @@ fs.createReadStream(FILE_PATH)
     })
     .on("end", function () {
         fs.createReadStream(FILE_PATH)
-            .pipe(parse({delimiter: ",", from_line: 2, to_line: 1500}))
+            .pipe(parse({delimiter: ",", from_line: 2, to_line: 20}))
             .on("data", function (row) {
                 transHistRows.push(row);
             })
@@ -57,6 +83,8 @@ fs.createReadStream(FILE_PATH)
                 // using predefined methods based on options (input argument)
                 if (options.t) {
                     getLatestPortfolioForParticularToken(transactionHistoryDF, options.t);
+                } else if (options.d) {
+                    getPortfolioValueForParticularDate(transactionHistoryDF, options.d);
                 }
 
             })
@@ -67,6 +95,5 @@ fs.createReadStream(FILE_PATH)
     .on("error", function (error) {
         console.log(error.message);
     });
-
 
 
