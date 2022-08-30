@@ -88,22 +88,27 @@ const getPortfolioForParticularTokenInParticularDate = (df, date, token) => {
 // Method to get the latest portfolio value for a given token input
 const getLatestPortfolioForEveryToken = df => {
     let tokenBalanceMap = new Map();
+    let token;
 
+    df.cast(transHistCol_AMOUNT, Number)
+        .map(row => {
+            token = row.get(transHistCol_TOKEN);
+            if (tokenBalanceMap.has(token)) {
+                tokenBalanceMap.set(token, row.get(transHistCol_TRANSACTION_TYPE) === "DEPOSIT" ?
+                    tokenBalanceMap.get(token) + row.get(transHistCol_AMOUNT) :
+                    tokenBalanceMap.get(token) - row.get(transHistCol_AMOUNT));
+            } else {
+                tokenBalanceMap.set(token, row.get(transHistCol_TRANSACTION_TYPE) === "DEPOSIT" ?
+                    row.get(transHistCol_AMOUNT) :
+                    -Math.abs(row.get(transHistCol_AMOUNT)));
+            }
+        });
 
-    // let balance = 0;
-    // df.filter(row => row.get(transHistCol_TOKEN) === token)
-    //     .cast(transHistCol_AMOUNT, Number)
-    //     .map(row => {
-    //         balance = row.get(transHistCol_TRANSACTION_TYPE) === "DEPOSIT" ?
-    //             balance + row.get(transHistCol_AMOUNT) :
-    //             balance - row.get(transHistCol_AMOUNT);
-    //     });
-    //
-    // console.log("Latest Portfolio Value for " + token + " is : " + balance);
+    // iterating the map for showing the results
+    tokenBalanceMap.forEach((value, key) => {
+        console.log("Latest Portfolio Value for " + key + " is : " + value);
+    });
 }
-
-
-
 
 
 // Read csv file and process data using data frame
@@ -115,7 +120,7 @@ fs.createReadStream(FILE_PATH)
     })
     .on("end", function () {
         fs.createReadStream(FILE_PATH)
-            .pipe(parse({delimiter: ",", from_line: 2, to_line: 20}))
+            .pipe(parse({delimiter: ",", from_line: 2, to_line: 40}))
             .on("data", function (row) {
                 transHistRows.push(row);
             })
